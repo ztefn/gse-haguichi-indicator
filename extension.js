@@ -87,11 +87,11 @@ const HaguichiProxy = Gio.DBusProxy.makeProxyWrapper(HaguichiInterface);
  * Behold the Haguichi Indicator class.
  */
 const HaguichiIndicator = new Lang.Class({
-	Name: 'HaguichiIndicator',
-	Extends: PanelMenu.Button,
+    Name: 'HaguichiIndicator',
+    Extends: PanelMenu.Button,
 
-	_init: function() {
-		this.parent(0.0, 'HaguichiIndicator');
+    _init: function() {
+        this.parent(0.0, 'HaguichiIndicator');
 
         /**
          * Get the Haguichi session instance from the bus.
@@ -101,45 +101,45 @@ const HaguichiIndicator = new Lang.Class({
         /**
          * Construct the status icon and add it to the panel.
          */
-		this.statusIcon = new St.Icon({ icon_name: 'haguichi-disconnected-symbolic', style_class: 'system-status-icon' });
+        this.statusIcon = new St.Icon({ icon_name: 'haguichi-disconnected-symbolic', style_class: 'system-status-icon' });
 
-		this.box = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
-		this.box.add_actor(this.statusIcon);
+        this.box = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
+        this.box.add_actor(this.statusIcon);
 
-		this.actor.add_child(this.box);
+        this.actor.add_child(this.box);
 
         /**
          * Create all menu items.
          */
-		this.showMenuItem       = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Show Haguichi")));
-		this.connectingMenuItem = new PopupMenu.PopupMenuItem(removeMnemonics(_("Connecting…")).replace ('…', ''));
-		this.connectMenuItem    = new PopupMenu.PopupMenuItem(removeMnemonics(_("C_onnect")));
-		this.disconnectMenuItem = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Disconnect")));
-		this.joinMenuItem       = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Join Network…")));
-		this.createMenuItem     = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Create Network…")));
-		this.infoMenuItem       = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Information")));
-		this.quitMenuItem       = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Quit")));
+        this.showMenuItem       = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Show Haguichi")));
+        this.connectingMenuItem = new PopupMenu.PopupMenuItem(removeMnemonics(_("Connecting…")).replace ('…', ''));
+        this.connectMenuItem    = new PopupMenu.PopupMenuItem(removeMnemonics(_("C_onnect")));
+        this.disconnectMenuItem = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Disconnect")));
+        this.joinMenuItem       = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Join Network…")));
+        this.createMenuItem     = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Create Network…")));
+        this.infoMenuItem       = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Information")));
+        this.quitMenuItem       = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Quit")));
 
         /**
          * Add the menu items and some separators to the popup menu.
          */
-		this.menu.addMenuItem(this.showMenuItem);
-		this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-		this.menu.addMenuItem(this.connectingMenuItem);
-		this.menu.addMenuItem(this.connectMenuItem);
-		this.menu.addMenuItem(this.disconnectMenuItem);
-		this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-		this.menu.addMenuItem(this.joinMenuItem);
-		this.menu.addMenuItem(this.createMenuItem);
-		this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-		this.menu.addMenuItem(this.infoMenuItem);
-		this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-		this.menu.addMenuItem(this.quitMenuItem);
+        this.menu.addMenuItem(this.showMenuItem);
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this.menu.addMenuItem(this.connectingMenuItem);
+        this.menu.addMenuItem(this.connectMenuItem);
+        this.menu.addMenuItem(this.disconnectMenuItem);
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this.menu.addMenuItem(this.joinMenuItem);
+        this.menu.addMenuItem(this.createMenuItem);
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this.menu.addMenuItem(this.infoMenuItem);
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this.menu.addMenuItem(this.quitMenuItem);
 
         /**
          * Connect some actions to the menu items.
          */
-		this.showMenuItem.connect('activate', Lang.bind(this, function() {
+        this.showMenuItem.connect('activate', Lang.bind(this, function() {
             if (this.showMenuItem._ornament == PopupMenu.Ornament.CHECK) {
                 haguichiProxy.HideRemote();
             }
@@ -147,22 +147,22 @@ const HaguichiIndicator = new Lang.Class({
                 haguichiProxy.ShowRemote();
             }
         }));
-		this.connectMenuItem.connect('activate', function() {
+        this.connectMenuItem.connect('activate', function() {
             haguichiProxy.StartHamachiRemote();
         });
-		this.disconnectMenuItem.connect('activate', function() {
+        this.disconnectMenuItem.connect('activate', function() {
             haguichiProxy.StopHamachiRemote();
         });
-		this.joinMenuItem.connect('activate', function() {
+        this.joinMenuItem.connect('activate', function() {
             haguichiProxy.JoinNetworkRemote();
         });
-		this.createMenuItem.connect('activate', function() {
+        this.createMenuItem.connect('activate', function() {
             haguichiProxy.CreateNetworkRemote();
         });
-		this.infoMenuItem.connect('activate', function() {
+        this.infoMenuItem.connect('activate', function() {
             haguichiProxy.InformationRemote();
         });
-		this.quitMenuItem.connect('activate', function() {
+        this.quitMenuItem.connect('activate', function() {
             haguichiProxy.QuitAppRemote();
         });
 
@@ -206,7 +206,7 @@ const HaguichiIndicator = new Lang.Class({
          * Show indicator when a session is active.
          */
         this._setIndicatorVisibility(haguichiProxy.get_name_owner() !== null);
-	},
+    },
 
     /**
      * This function shows or hides the indicator.
@@ -348,14 +348,13 @@ let haguichiIndicator;
  * This function is called by GNOME Shell to enable the extension.
  */
 function enable() {
-	haguichiIndicator = new HaguichiIndicator();
-	Main.panel.addToStatusArea('haguichi-indicator', haguichiIndicator);
+    haguichiIndicator = new HaguichiIndicator();
+    Main.panel.addToStatusArea('haguichi-indicator', haguichiIndicator);
 }
 
 /**
  * This function is called by GNOME Shell to disable the extension.
  */
 function disable() {
-	haguichiIndicator.destroy();
+    haguichiIndicator.destroy();
 }
-
