@@ -14,4 +14,6 @@ Let's you control [Haguichi](https://www.haguichi.net) directly from the system 
 
 ### Manual installation
 
- Download zip and extract contents as ~/.local/share/gnome-shell/extensions/gse-haguichi-indicator@ztefn.github.com
+1. Download the source code as zip from GitHub and extract it.
+2. Copy the folder `gse-haguichi-indicator@ztefn.github.com` from the extracted archive to `~/.local/share/gnome-shell/extensions/`.
+3. Restart GNOME Shell (`Alt`+`F2`, `r`, `Enter`) and enable the extension with *gnome-tweak-tool*.
