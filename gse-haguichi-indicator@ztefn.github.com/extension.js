@@ -16,6 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
+const Clutter = imports.gi.Clutter;
 const St = imports.gi.St;
 const Lang = imports.lang;
 const Gio = imports.gi.Gio;
@@ -96,7 +97,7 @@ const HaguichiIndicator = new Lang.Class({
         /**
          * Get the Haguichi session instance from the bus.
          */
-        let haguichiProxy = new HaguichiProxy(Gio.DBus.session, 'apps.Haguichi', '/apps/Haguichi');
+        this.haguichiProxy = new HaguichiProxy(Gio.DBus.session, 'apps.Haguichi', '/apps/Haguichi');
 
         /**
          * Construct the status icon and add it to the panel.
@@ -141,30 +142,30 @@ const HaguichiIndicator = new Lang.Class({
          */
         this.showMenuItem.connect('activate', Lang.bind(this, function() {
             if (this.showMenuItem._ornament == PopupMenu.Ornament.CHECK) {
-                haguichiProxy.HideRemote();
+                this.haguichiProxy.HideRemote();
             }
             else {
-                haguichiProxy.ShowRemote();
+                this.haguichiProxy.ShowRemote();
             }
         }));
-        this.connectMenuItem.connect('activate', function() {
-            haguichiProxy.StartHamachiRemote();
-        });
-        this.disconnectMenuItem.connect('activate', function() {
-            haguichiProxy.StopHamachiRemote();
-        });
-        this.joinMenuItem.connect('activate', function() {
-            haguichiProxy.JoinNetworkRemote();
-        });
-        this.createMenuItem.connect('activate', function() {
-            haguichiProxy.CreateNetworkRemote();
-        });
-        this.infoMenuItem.connect('activate', function() {
-            haguichiProxy.InformationRemote();
-        });
-        this.quitMenuItem.connect('activate', function() {
-            haguichiProxy.QuitAppRemote();
-        });
+        this.connectMenuItem.connect('activate', Lang.bind(this, function() {
+            this.haguichiProxy.StartHamachiRemote();
+        }));
+        this.disconnectMenuItem.connect('activate', Lang.bind(this, function() {
+            this.haguichiProxy.StopHamachiRemote();
+        }));
+        this.joinMenuItem.connect('activate', Lang.bind(this, function() {
+            this.haguichiProxy.JoinNetworkRemote();
+        }));
+        this.createMenuItem.connect('activate', Lang.bind(this, function() {
+            this.haguichiProxy.CreateNetworkRemote();
+        }));
+        this.infoMenuItem.connect('activate', Lang.bind(this, function() {
+            this.haguichiProxy.InformationRemote();
+        }));
+        this.quitMenuItem.connect('activate', Lang.bind(this, function() {
+            this.haguichiProxy.QuitAppRemote();
+        }));
 
         /**
          * Connect to the proxy signals so that we can update our state when changes occurs:
@@ -173,17 +174,17 @@ const HaguichiIndicator = new Lang.Class({
          * 3. Main window is shown or hidden
          * 4. Haguichi session has appeared or disappeared
          */
-        haguichiProxy.connectSignal('ModeChanged', Lang.bind(this, function(proxy, sender, result) {
+        this.haguichiProxy.connectSignal('ModeChanged', Lang.bind(this, function(proxy, sender, result) {
             this._setMode(result[0]);
         }));
-        haguichiProxy.connectSignal('ModalityChanged', Lang.bind(this, function(proxy, sender, result) {
+        this.haguichiProxy.connectSignal('ModalityChanged', Lang.bind(this, function(proxy, sender, result) {
             this._setModality(result[0]);
         }));
-        haguichiProxy.connectSignal('VisibilityChanged', Lang.bind(this, function(proxy, sender, result) {
+        this.haguichiProxy.connectSignal('VisibilityChanged', Lang.bind(this, function(proxy, sender, result) {
             this._setAppVisibility(result[0]);
         }));
-        haguichiProxy.connect('notify::g-name-owner', Lang.bind(this, function() {
-            this._setIndicatorVisibility(haguichiProxy.get_name_owner() !== null);
+        this.haguichiProxy.connect('notify::g-name-owner', Lang.bind(this, function() {
+            this._setIndicatorVisibility(this.haguichiProxy.get_name_owner() !== null);
         }));
 
         /**
@@ -192,20 +193,43 @@ const HaguichiIndicator = new Lang.Class({
          * 2. Is there a modal dialog being shown?
          * 3. Is the main window visible or not?
          */
-        haguichiProxy.GetModeRemote(Lang.bind(this, function(result) {
+        this.haguichiProxy.GetModeRemote(Lang.bind(this, function(result) {
             this._setMode(result[0]);
         }));
-        haguichiProxy.GetModalityRemote(Lang.bind(this, function(result) {
+        this.haguichiProxy.GetModalityRemote(Lang.bind(this, function(result) {
             this._setModality(result[0]);
         }));
-        haguichiProxy.GetVisibilityRemote(Lang.bind(this, function(result) {
+        this.haguichiProxy.GetVisibilityRemote(Lang.bind(this, function(result) {
             this._setAppVisibility(result[0]);
         }));
 
         /**
          * Show indicator when a session is active.
          */
-        this._setIndicatorVisibility(haguichiProxy.get_name_owner() !== null);
+        this._setIndicatorVisibility(this.haguichiProxy.get_name_owner() !== null);
+
+        /**
+         * Connect to scroll events.
+         */
+        this.actor.connect('scroll-event', Lang.bind(this, this._onScrollEvent));
+    },
+
+    /**
+     * This function shows the main window when scrolling up and hides it when scrolling down.
+     */
+    _onScrollEvent: function(actor, event) {
+        if (this.modal == true)
+            return;
+
+        switch (event.get_scroll_direction()) {
+            case Clutter.ScrollDirection.UP:
+                this.haguichiProxy.ShowRemote();
+                break;
+
+            case Clutter.ScrollDirection.DOWN:
+                this.haguichiProxy.HideRemote();
+                break;
+        }
     },
 
     /**
@@ -340,7 +364,7 @@ function removeMnemonics(label) {
 }
 
 /**
- * This is our Haguichi indicator instance.
+ * This is our Haguichi Indicator instance.
  */
 let haguichiIndicator;
 
