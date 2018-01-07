@@ -1,6 +1,6 @@
 /**
     Haguichi Indicator for GNOME Shell
-    Copyright (C) 2016 Stephen Brandt <stephen@stephenbrandt.com>
+    Copyright (C) 2016-2018 Stephen Brandt <stephen@stephenbrandt.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,10 +30,10 @@ const _ = Gettext.gettext;
 
 /**
  * This is the D-Bus interface as XML and can be acquired by executing the following command:
- * dbus-send --session --print-reply --dest=apps.Haguichi /apps/Haguichi org.freedesktop.DBus.Introspectable.Introspect
+ * dbus-send --session --print-reply --dest=com.github.ztefn.haguichi /com/github/ztefn/haguichi org.freedesktop.DBus.Introspectable.Introspect
  */
 const HaguichiInterface = '<node>\
-  <interface name="apps.Haguichi">\
+  <interface name="com.github.ztefn.haguichi">\
     <method name="Show">\
     </method>\
     <method name="Hide">\
@@ -97,7 +97,7 @@ const HaguichiIndicator = new Lang.Class({
         /**
          * Get the Haguichi session instance from the bus.
          */
-        this.haguichiProxy = new HaguichiProxy(Gio.DBus.session, 'apps.Haguichi', '/apps/Haguichi');
+        this.haguichiProxy = new HaguichiProxy(Gio.DBus.session, 'com.github.ztefn.haguichi', '/com/github/ztefn/haguichi');
 
         /**
          * Construct the status icon and add it to the panel.
