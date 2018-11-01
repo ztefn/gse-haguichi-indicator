@@ -243,12 +243,7 @@ const HaguichiIndicator = new Lang.Class({
      * This function adds or removes the checkmark for the "Show Haguichi" menu item.
      */
     _setAppVisibility: function(visible) {
-        if (visible == true) {
-            this.showMenuItem.setOrnament(PopupMenu.Ornament.CHECK);
-        }
-        else {
-            this.showMenuItem.setOrnament(PopupMenu.Ornament.NONE);
-        }
+        this.showMenuItem.setOrnament((visible == true) ? PopupMenu.Ornament.CHECK : PopupMenu.Ornament.NONE);
     },
 
     /**
@@ -256,28 +251,23 @@ const HaguichiIndicator = new Lang.Class({
      */
     _setModality: function(modal) {
         this.modal = modal;
-
-        if (modal) {
-            this.showMenuItem.setSensitive(false);
-            this.connectMenuItem.setSensitive(false);
-            this.disconnectMenuItem.setSensitive(false);
-            this.joinMenuItem.setSensitive(false);
-            this.createMenuItem.setSensitive(false);
-            this.infoMenuItem.setSensitive(false);
-        }
-        else {
-            this.showMenuItem.setSensitive(true);
-            this._setMode(this.mode);
-        }
+        this._setMode(this.mode);
     },
 
     /**
-     * This function make every menu item reflect the current mode Haguichi is in.
+     * This function saves the current mode and makes calls to set both the icon and menu into the requested mode.
      */
     _setMode: function(mode) {
+        this._setIconMode(mode);
+        this._setMenuMode(mode);
+
         this.mode = mode;
-        this.iconNum = 0;
-        
+    },
+
+    /**
+     * This function makes every menu item reflect the current mode Haguichi is in.
+     */
+    _setMenuMode: function(mode) {
         switch (mode) {
             case 'Connecting':
                 this.connectingMenuItem.setSensitive(false);
@@ -287,10 +277,8 @@ const HaguichiIndicator = new Lang.Class({
                 this.joinMenuItem.setSensitive(false);
                 this.createMenuItem.setSensitive(false);
                 this.infoMenuItem.setSensitive(true);
-                
-                Mainloop.timeout_add(400, Lang.bind(this, this._switchIcon))
                 break;
-                
+
             case 'Connected':
                 this.connectingMenuItem.actor.visible = false;
                 this.connectMenuItem.actor.visible = false;
@@ -299,10 +287,8 @@ const HaguichiIndicator = new Lang.Class({
                 this.joinMenuItem.setSensitive(true);
                 this.createMenuItem.setSensitive(true);
                 this.infoMenuItem.setSensitive(true);
-                
-                this.statusIcon.icon_name = 'haguichi-connected-symbolic';
                 break;
-                
+
             case 'Disconnected':
                 this.connectingMenuItem.actor.visible = false;
                 this.connectMenuItem.setSensitive(true);
@@ -311,10 +297,8 @@ const HaguichiIndicator = new Lang.Class({
                 this.joinMenuItem.setSensitive(false);
                 this.createMenuItem.setSensitive(false);
                 this.infoMenuItem.setSensitive(true);
-                
-                this.statusIcon.icon_name = 'haguichi-disconnected-symbolic';
                 break;
-            
+
             default:
                 this.connectingMenuItem.actor.visible = false;
                 this.connectMenuItem.setSensitive(false);
@@ -323,7 +307,48 @@ const HaguichiIndicator = new Lang.Class({
                 this.joinMenuItem.setSensitive(false);
                 this.createMenuItem.setSensitive(false);
                 this.infoMenuItem.setSensitive(false);
-                
+                break;
+        }
+
+        if (this.modal) {
+            this.showMenuItem.setSensitive(false);
+            this.connectMenuItem.setSensitive(false);
+            this.disconnectMenuItem.setSensitive(false);
+            this.joinMenuItem.setSensitive(false);
+            this.createMenuItem.setSensitive(false);
+            this.infoMenuItem.setSensitive(false);
+        }
+        else {
+            this.showMenuItem.setSensitive(true);
+        }
+    },
+
+    /**
+     * This function makes the status icon reflect the current mode Haguichi is in.
+     */
+    _setIconMode: function(mode) {
+        /**
+         * Check if there isn't already an animation going on when connecting.
+         */
+        if ((mode == "Connecting") && (this.statusIcon.icon_name.contains("haguichi-connecting")))
+            return;
+
+        this.iconNum = 0;
+
+        switch (mode) {
+            case 'Connecting':
+                Mainloop.timeout_add(400, Lang.bind(this, this._switchIcon))
+                break;
+
+            case 'Connected':
+                this.statusIcon.icon_name = 'haguichi-connected-symbolic';
+                break;
+
+            case 'Disconnected':
+                this.statusIcon.icon_name = 'haguichi-disconnected-symbolic';
+                break;
+
+            default:
                 this.statusIcon.icon_name = 'haguichi-disconnected-symbolic';
                 break;
         }
@@ -333,24 +358,22 @@ const HaguichiIndicator = new Lang.Class({
      * This function switches the icon when connecting.
      */
     _switchIcon: function() {
-        if (this.mode == 'Connecting') {
-            if (this.iconNum == 0) {
-                this.statusIcon.icon_name = 'haguichi-connecting-1-symbolic';
-                this.iconNum = 1;
-            }
-            else if (this.iconNum == 1) {
-                this.statusIcon.icon_name = 'haguichi-connecting-2-symbolic';
-                this.iconNum = 2;
-            }
-            else {
-                this.statusIcon.icon_name = 'haguichi-connecting-3-symbolic';
-                this.iconNum = 0;
-            }
-            return true;
+        if (this.mode !== 'Connecting')
+            return false;
+
+        if (this.iconNum == 0) {
+            this.statusIcon.icon_name = 'haguichi-connecting-1-symbolic';
+            this.iconNum = 1;
+        }
+        else if (this.iconNum == 1) {
+            this.statusIcon.icon_name = 'haguichi-connecting-2-symbolic';
+            this.iconNum = 2;
         }
         else {
-            return false;
+            this.statusIcon.icon_name = 'haguichi-connecting-3-symbolic';
+            this.iconNum = 0;
         }
+        return true;
     }
 });
 
