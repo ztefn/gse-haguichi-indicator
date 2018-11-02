@@ -330,7 +330,7 @@ const HaguichiIndicator = new Lang.Class({
         /**
          * Check if there isn't already an animation going on when connecting.
          */
-        if ((mode == "Connecting") && (this.statusIcon.icon_name.contains("haguichi-connecting")))
+        if ((mode == "Connecting") && (this.statusIcon.icon_name.indexOf("haguichi-connecting") !== -1))
             return;
 
         this.iconNum = 0;
