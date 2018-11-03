@@ -344,10 +344,6 @@ const HaguichiIndicator = new Lang.Class({
                 this.statusIcon.icon_name = 'haguichi-connected-symbolic';
                 break;
 
-            case 'Disconnected':
-                this.statusIcon.icon_name = 'haguichi-disconnected-symbolic';
-                break;
-
             default:
                 this.statusIcon.icon_name = 'haguichi-disconnected-symbolic';
                 break;
