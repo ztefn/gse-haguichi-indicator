@@ -28,6 +28,8 @@ const PopupMenu = imports.ui.popupMenu;
 const Gettext = imports.gettext.domain('haguichi');
 const _ = Gettext.gettext;
 
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+
 /**
  * This is the D-Bus interface as XML and can be acquired by executing the following command:
  * dbus-send --session --print-reply --dest=com.github.ztefn.haguichi /com/github/ztefn/haguichi org.freedesktop.DBus.Introspectable.Introspect
@@ -102,7 +104,8 @@ const HaguichiIndicator = new Lang.Class({
         /**
          * Construct the status icon and add it to the panel.
          */
-        this.statusIcon = new St.Icon({ icon_name: 'haguichi-disconnected-symbolic', style_class: 'system-status-icon' });
+        this.statusIcon = new St.Icon({ style_class: 'system-status-icon' });
+        this._setIcon('disconnected');
 
         this.box = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
         this.box.add_actor(this.statusIcon);
@@ -330,7 +333,7 @@ const HaguichiIndicator = new Lang.Class({
         /**
          * Check if there isn't already an animation going on when connecting.
          */
-        if ((mode == "Connecting") && (this.statusIcon.icon_name.indexOf("haguichi-connecting") !== -1))
+        if ((mode == 'Connecting') && (this.iconName.indexOf('connecting') !== -1))
             return;
 
         this.iconNum = 0;
@@ -341,13 +344,21 @@ const HaguichiIndicator = new Lang.Class({
                 break;
 
             case 'Connected':
-                this.statusIcon.icon_name = 'haguichi-connected-symbolic';
+                this._setIcon('connected');
                 break;
 
             default:
-                this.statusIcon.icon_name = 'haguichi-disconnected-symbolic';
+                this._setIcon('disconnected');
                 break;
         }
+    },
+
+    /**
+     * This function sets the status icon.
+     */
+    _setIcon: function(iconName) {
+        this.iconName = iconName;
+        this.statusIcon.gicon = Gio.icon_new_for_string(Me.path + '/icons/haguichi-' + iconName +'-symbolic.svg');
     },
 
     /**
@@ -358,15 +369,15 @@ const HaguichiIndicator = new Lang.Class({
             return false;
 
         if (this.iconNum == 0) {
-            this.statusIcon.icon_name = 'haguichi-connecting-1-symbolic';
+            this._setIcon('connecting-1');
             this.iconNum = 1;
         }
         else if (this.iconNum == 1) {
-            this.statusIcon.icon_name = 'haguichi-connecting-2-symbolic';
+            this._setIcon('connecting-2');
             this.iconNum = 2;
         }
         else {
-            this.statusIcon.icon_name = 'haguichi-connecting-3-symbolic';
+            this._setIcon('connecting-3');
             this.iconNum = 0;
         }
         return true;
