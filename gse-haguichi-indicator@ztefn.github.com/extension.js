@@ -110,7 +110,7 @@ const HaguichiIndicator = new Lang.Class({
         this.box = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
         this.box.add_actor(this.statusIcon);
 
-        this.actor.add_child(this.box);
+        this.add_child(this.box);
 
         /**
          * Create all menu items.
@@ -214,7 +214,7 @@ const HaguichiIndicator = new Lang.Class({
         /**
          * Connect to scroll events.
          */
-        this.actor.connect('scroll-event', Lang.bind(this, this._onScrollEvent));
+        this.connect('scroll-event', Lang.bind(this, this._onScrollEvent));
     },
 
     /**
@@ -239,7 +239,7 @@ const HaguichiIndicator = new Lang.Class({
      * This function shows or hides the indicator.
      */
     _setIndicatorVisibility: function(visible) {
-        this.actor.visible = visible;
+        this.visible = visible;
     },
 
     /**
@@ -274,39 +274,39 @@ const HaguichiIndicator = new Lang.Class({
         switch (mode) {
             case 'Connecting':
                 this.connectingMenuItem.setSensitive(false);
-                this.connectingMenuItem.actor.visible = true;
-                this.connectMenuItem.actor.visible = false;
-                this.disconnectMenuItem.actor.visible = false;
+                this.connectingMenuItem.visible = true;
+                this.connectMenuItem.visible = false;
+                this.disconnectMenuItem.visible = false;
                 this.joinMenuItem.setSensitive(false);
                 this.createMenuItem.setSensitive(false);
                 this.infoMenuItem.setSensitive(true);
                 break;
 
             case 'Connected':
-                this.connectingMenuItem.actor.visible = false;
-                this.connectMenuItem.actor.visible = false;
+                this.connectingMenuItem.visible = false;
+                this.connectMenuItem.visible = false;
                 this.disconnectMenuItem.setSensitive(true);
-                this.disconnectMenuItem.actor.visible = true;
+                this.disconnectMenuItem.visible = true;
                 this.joinMenuItem.setSensitive(true);
                 this.createMenuItem.setSensitive(true);
                 this.infoMenuItem.setSensitive(true);
                 break;
 
             case 'Disconnected':
-                this.connectingMenuItem.actor.visible = false;
+                this.connectingMenuItem.visible = false;
                 this.connectMenuItem.setSensitive(true);
-                this.connectMenuItem.actor.visible = true;
-                this.disconnectMenuItem.actor.visible = false;
+                this.connectMenuItem.visible = true;
+                this.disconnectMenuItem.visible = false;
                 this.joinMenuItem.setSensitive(false);
                 this.createMenuItem.setSensitive(false);
                 this.infoMenuItem.setSensitive(true);
                 break;
 
             default:
-                this.connectingMenuItem.actor.visible = false;
+                this.connectingMenuItem.visible = false;
                 this.connectMenuItem.setSensitive(false);
-                this.connectMenuItem.actor.visible = true;
-                this.disconnectMenuItem.actor.visible = false;
+                this.connectMenuItem.visible = true;
+                this.disconnectMenuItem.visible = false;
                 this.joinMenuItem.setSensitive(false);
                 this.createMenuItem.setSensitive(false);
                 this.infoMenuItem.setSensitive(false);
