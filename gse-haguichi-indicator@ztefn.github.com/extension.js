@@ -197,13 +197,16 @@ const HaguichiIndicator = new Lang.Class({
          * 3. Is the main window visible or not?
          */
         this.haguichiProxy.GetModeRemote(Lang.bind(this, function(result) {
-            this._setMode(result[0]);
+            let [mode] = result;
+            this._setMode(mode);
         }));
         this.haguichiProxy.GetModalityRemote(Lang.bind(this, function(result) {
-            this._setModality(result[0]);
+            let [modal] = result;
+            this._setModality(modal);
         }));
         this.haguichiProxy.GetVisibilityRemote(Lang.bind(this, function(result) {
-            this._setAppVisibility(result[0]);
+            let [visible] = result;
+            this._setAppVisibility(visible);
         }));
 
         /**
