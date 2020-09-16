@@ -1,6 +1,6 @@
 # Haguichi Indicator for GNOME Shell
 
-Let's you control [Haguichi](https://www.haguichi.net) directly from the system status area in GNOME Shell.
+Let's you control [Haguichi](https://haguichi.net) directly from the system status area in GNOME Shell.
 
 ## Screenshot
 
@@ -16,4 +16,4 @@ Let's you control [Haguichi](https://www.haguichi.net) directly from the system 
 
 1. Download the source code as zip from GitHub and extract it.
 2. Copy the folder `gse-haguichi-indicator@ztefn.github.com` from the extracted archive to `~/.local/share/gnome-shell/extensions/`.
-3. Restart GNOME Shell (`Alt`+`F2`, `r`, `Enter`) and enable the extension with *gnome-tweak-tool*.
+3. Restart GNOME Shell (`Alt`+`F2`, `r`, `Enter`) and enable the extension with *gnome-tweaks*.
