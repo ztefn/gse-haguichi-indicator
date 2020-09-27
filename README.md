@@ -1,6 +1,6 @@
 # Haguichi Indicator for GNOME Shell
 
-Let's you control [Haguichi](https://haguichi.net) directly from the system status area in GNOME Shell.
+Lets you control [Haguichi](https://haguichi.net) directly from the system status area in GNOME Shell.
 
 ## Screenshot
 
