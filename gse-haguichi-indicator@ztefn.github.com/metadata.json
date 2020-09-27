@@ -2,6 +2,6 @@
   "shell-version": ["3.34", "3.36", "3.38"],
   "uuid": "gse-haguichi-indicator@ztefn.github.com",
   "name": "Haguichi Indicator",
-  "description": "Let's you control Haguichi directly from the system status area in GNOME Shell.",
+  "description": "Lets you control Haguichi directly from the system status area in GNOME Shell.",
   "url": "https://github.com/ztefn/gse-haguichi-indicator"
 }
