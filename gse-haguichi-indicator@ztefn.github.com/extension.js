@@ -94,7 +94,7 @@ const HaguichiIndicator = new Lang.Class({
     Extends: PanelMenu.Button,
 
     _init: function() {
-        this.parent(0.0, 'HaguichiIndicator');
+        this.parent(0.5, 'HaguichiIndicator');
 
         /**
          * Get the Haguichi session instance from the bus.
