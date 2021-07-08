@@ -1,6 +1,6 @@
 /**
     Haguichi Indicator for GNOME Shell
-    Copyright (C) 2016-2020 Stephen Brandt <stephen@stephenbrandt.com>
+    Copyright (C) 2016-2021 Stephen Brandt <stephen@stephenbrandt.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@
 
 const Clutter = imports.gi.Clutter;
 const St = imports.gi.St;
-const Lang = imports.lang;
 const Gio = imports.gi.Gio;
+const GObject = imports.gi.GObject;
 const Main = imports.ui.main;
 const Mainloop = imports.mainloop;
 const PanelMenu = imports.ui.panelMenu;
@@ -89,12 +89,9 @@ const HaguichiProxy = Gio.DBusProxy.makeProxyWrapper(HaguichiInterface);
 /**
  * Behold the Haguichi Indicator class.
  */
-const HaguichiIndicator = new Lang.Class({
-    Name: 'HaguichiIndicator',
-    Extends: PanelMenu.Button,
-
-    _init: function() {
-        this.parent(0.5, 'HaguichiIndicator');
+const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends PanelMenu.Button {
+    _init() {
+        super._init(0.5, 'Haguichi Indicator');
 
         /**
          * Get the Haguichi session instance from the bus.
@@ -143,32 +140,32 @@ const HaguichiIndicator = new Lang.Class({
         /**
          * Connect some actions to the menu items.
          */
-        this.showMenuItem.connect('activate', Lang.bind(this, function() {
+        this.showMenuItem.connect('activate', () => {
             if (this.showMenuItem._ornament == PopupMenu.Ornament.CHECK) {
                 this.haguichiProxy.HideRemote();
             }
             else {
                 this.haguichiProxy.ShowRemote();
             }
-        }));
-        this.connectMenuItem.connect('activate', Lang.bind(this, function() {
+        });
+        this.connectMenuItem.connect('activate', () => {
             this.haguichiProxy.StartHamachiRemote();
-        }));
-        this.disconnectMenuItem.connect('activate', Lang.bind(this, function() {
+        });
+        this.disconnectMenuItem.connect('activate', () => {
             this.haguichiProxy.StopHamachiRemote();
-        }));
-        this.joinMenuItem.connect('activate', Lang.bind(this, function() {
+        });
+        this.joinMenuItem.connect('activate', () => {
             this.haguichiProxy.JoinNetworkRemote();
-        }));
-        this.createMenuItem.connect('activate', Lang.bind(this, function() {
+        });
+        this.createMenuItem.connect('activate', () => {
             this.haguichiProxy.CreateNetworkRemote();
-        }));
-        this.infoMenuItem.connect('activate', Lang.bind(this, function() {
+        });
+        this.infoMenuItem.connect('activate', () => {
             this.haguichiProxy.InformationRemote();
-        }));
-        this.quitMenuItem.connect('activate', Lang.bind(this, function() {
+        });
+        this.quitMenuItem.connect('activate', () => {
             this.haguichiProxy.QuitAppRemote();
-        }));
+        });
 
         /**
          * Connect to the proxy signals so that we can update our state when changes occurs:
@@ -177,18 +174,18 @@ const HaguichiIndicator = new Lang.Class({
          * 3. Main window is shown or hidden
          * 4. Haguichi session has appeared or disappeared
          */
-        this.haguichiProxy.connectSignal('ModeChanged', Lang.bind(this, function(proxy, sender, result) {
+        this.haguichiProxy.connectSignal('ModeChanged', (proxy, sender, result) => {
             this._setMode(result[0]);
-        }));
-        this.haguichiProxy.connectSignal('ModalityChanged', Lang.bind(this, function(proxy, sender, result) {
+        });
+        this.haguichiProxy.connectSignal('ModalityChanged', (proxy, sender, result) => {
             this._setModality(result[0]);
-        }));
-        this.haguichiProxy.connectSignal('VisibilityChanged', Lang.bind(this, function(proxy, sender, result) {
+        });
+        this.haguichiProxy.connectSignal('VisibilityChanged', (proxy, sender, result) => {
             this._setAppVisibility(result[0]);
-        }));
-        this.haguichiProxy.connect('notify::g-name-owner', Lang.bind(this, function() {
+        });
+        this.haguichiProxy.connect('notify::g-name-owner', () => {
             this._setIndicatorVisibility(this.haguichiProxy.get_name_owner() !== null);
-        }));
+        });
 
         /**
          * Retrieve the initial state to begin with:
@@ -196,18 +193,18 @@ const HaguichiIndicator = new Lang.Class({
          * 2. Is there a modal dialog being shown?
          * 3. Is the main window visible or not?
          */
-        this.haguichiProxy.GetModeRemote(Lang.bind(this, function(result) {
+        this.haguichiProxy.GetModeRemote((result) => {
             let [mode] = result;
             this._setMode(mode);
-        }));
-        this.haguichiProxy.GetModalityRemote(Lang.bind(this, function(result) {
+        });
+        this.haguichiProxy.GetModalityRemote((result) => {
             let [modal] = result;
             this._setModality(modal);
-        }));
-        this.haguichiProxy.GetVisibilityRemote(Lang.bind(this, function(result) {
+        });
+        this.haguichiProxy.GetVisibilityRemote((result) => {
             let [visible] = result;
             this._setAppVisibility(visible);
-        }));
+        });
 
         /**
          * Show indicator when a session is active.
@@ -217,13 +214,13 @@ const HaguichiIndicator = new Lang.Class({
         /**
          * Connect to scroll events.
          */
-        this.connect('scroll-event', Lang.bind(this, this._onScrollEvent));
-    },
+        this.connect('scroll-event', this._onScrollEvent.bind(this));
+    }
 
     /**
      * This function shows the main window when scrolling up and hides it when scrolling down.
      */
-    _onScrollEvent: function(actor, event) {
+    _onScrollEvent(actor, event) {
         if (this.modal == true)
             return;
 
@@ -236,44 +233,44 @@ const HaguichiIndicator = new Lang.Class({
                 this.haguichiProxy.HideRemote();
                 break;
         }
-    },
+    }
 
     /**
      * This function shows or hides the indicator.
      */
-    _setIndicatorVisibility: function(visible) {
+    _setIndicatorVisibility(visible) {
         this.visible = visible;
-    },
+    }
 
     /**
      * This function adds or removes the checkmark for the "Show Haguichi" menu item.
      */
-    _setAppVisibility: function(visible) {
+    _setAppVisibility(visible) {
         this.showMenuItem.setOrnament((visible == true) ? PopupMenu.Ornament.CHECK : PopupMenu.Ornament.NONE);
-    },
+    }
 
     /**
      * This function disables all menu items except for "Quit" when a modal dialog is open.
      */
-    _setModality: function(modal) {
+    _setModality(modal) {
         this.modal = modal;
         this._setMode(this.mode);
-    },
+    }
 
     /**
      * This function saves the current mode and makes calls to set both the icon and menu into the requested mode.
      */
-    _setMode: function(mode) {
+    _setMode(mode) {
         this._setIconMode(mode);
         this._setMenuMode(mode);
 
         this.mode = mode;
-    },
+    }
 
     /**
      * This function makes every menu item reflect the current mode Haguichi is in.
      */
-    _setMenuMode: function(mode) {
+    _setMenuMode(mode) {
         switch (mode) {
             case 'Connecting':
                 this.connectingMenuItem.setSensitive(false);
@@ -327,12 +324,12 @@ const HaguichiIndicator = new Lang.Class({
         else {
             this.showMenuItem.setSensitive(true);
         }
-    },
+    }
 
     /**
      * This function makes the status icon reflect the current mode Haguichi is in.
      */
-    _setIconMode: function(mode) {
+    _setIconMode(mode) {
         /**
          * Check if there isn't already an animation going on when connecting.
          */
@@ -343,7 +340,7 @@ const HaguichiIndicator = new Lang.Class({
 
         switch (mode) {
             case 'Connecting':
-                Mainloop.timeout_add(400, Lang.bind(this, this._switchIcon))
+                Mainloop.timeout_add(400, this._switchIcon.bind(this))
                 break;
 
             case 'Connected':
@@ -354,20 +351,20 @@ const HaguichiIndicator = new Lang.Class({
                 this._setIcon('disconnected');
                 break;
         }
-    },
+    }
 
     /**
      * This function sets the status icon.
      */
-    _setIcon: function(iconName) {
+    _setIcon(iconName) {
         this.iconName = iconName;
         this.statusIcon.gicon = Gio.icon_new_for_string(Me.path + '/icons/haguichi-' + iconName +'-symbolic.svg');
-    },
+    }
 
     /**
      * This function switches the icon when connecting.
      */
-    _switchIcon: function() {
+    _switchIcon() {
         if (this.mode !== 'Connecting')
             return false;
 
