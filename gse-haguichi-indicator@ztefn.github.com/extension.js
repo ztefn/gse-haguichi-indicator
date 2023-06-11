@@ -411,4 +411,5 @@ function enable() {
  */
 function disable() {
     haguichiIndicator.destroy();
+    haguichiIndicator = null;
 }
