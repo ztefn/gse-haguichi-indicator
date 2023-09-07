@@ -343,7 +343,7 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
 
         switch (mode) {
             case 'Connecting':
-                GLib.timeout_add(GLib.PRIORITY_DEFAULT, 400, this._switchIcon.bind(this));
+                sourceId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 400, this._switchIcon.bind(this));
                 break;
 
             case 'Connected':
@@ -397,6 +397,11 @@ function removeMnemonics(label) {
 }
 
 /**
+ * Keep track of last event source ID.
+ */
+let sourceId = null;
+
+/**
  * This is our Haguichi Indicator instance.
  */
 let haguichiIndicator;
@@ -416,5 +421,10 @@ export default class HaguichiIndicatorExtension extends Extension {
     disable() {
         haguichiIndicator.destroy();
         haguichiIndicator = null;
+
+        if (sourceId) {
+            GLib.Source.remove(sourceId);
+            sourceId = null;
+        }
     }
 }
