@@ -16,19 +16,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 **/
 
-const Clutter = imports.gi.Clutter;
-const St = imports.gi.St;
-const Gio = imports.gi.Gio;
-const GObject = imports.gi.GObject;
-const Main = imports.ui.main;
-const Mainloop = imports.mainloop;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
+import Clutter from 'gi://Clutter';
+import Gio     from 'gi://Gio';
+import GLib    from 'gi://GLib';
+import GObject from 'gi://GObject';
+import St      from 'gi://St';
 
-const Gettext = imports.gettext.domain('haguichi');
-const _ = Gettext.gettext;
+import * as Main      from 'resource:///org/gnome/shell/ui/main.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 
 /**
  * This is the D-Bus interface as XML and can be acquired by executing the following command:
@@ -90,8 +88,13 @@ const HaguichiProxy = Gio.DBusProxy.makeProxyWrapper(HaguichiInterface);
  * Behold the Haguichi Indicator class.
  */
 const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends PanelMenu.Button {
-    _init() {
+    _init(path) {
         super._init(0.5, 'Haguichi Indicator');
+
+        /**
+         * Save the extension path needed when loading the status icons.
+         */
+        this.extensionPath = path;
 
         /**
          * Get the Haguichi session instance from the bus.
@@ -340,7 +343,7 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
 
         switch (mode) {
             case 'Connecting':
-                Mainloop.timeout_add(400, this._switchIcon.bind(this))
+                GLib.timeout_add(GLib.PRIORITY_DEFAULT, 400, this._switchIcon.bind(this));
                 break;
 
             case 'Connected':
@@ -358,7 +361,7 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
      */
     _setIcon(iconName) {
         this.iconName = iconName;
-        this.statusIcon.gicon = Gio.icon_new_for_string(Me.path + '/icons/haguichi-' + iconName +'-symbolic.svg');
+        this.statusIcon.gicon = Gio.icon_new_for_string(this.extensionPath + '/icons/haguichi-' + iconName + '-symbolic.svg');
     }
 
     /**
@@ -366,7 +369,7 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
      */
     _switchIcon() {
         if (this.mode !== 'Connecting')
-            return false;
+            return GLib.SOURCE_REMOVE;
 
         if (this.iconNum == 0) {
             this._setIcon('connecting-1');
@@ -380,7 +383,7 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
             this._setIcon('connecting-3');
             this.iconNum = 0;
         }
-        return true;
+        return GLib.SOURCE_CONTINUE;
     }
 });
 
@@ -398,18 +401,20 @@ function removeMnemonics(label) {
  */
 let haguichiIndicator;
 
-/**
- * This function is called by GNOME Shell to enable the extension.
- */
-function enable() {
-    haguichiIndicator = new HaguichiIndicator();
-    Main.panel.addToStatusArea('haguichi-indicator', haguichiIndicator);
-}
+export default class HaguichiIndicatorExtension extends Extension {
+    /**
+     * This function is called by GNOME Shell to enable the extension.
+     */
+    enable() {
+        haguichiIndicator = new HaguichiIndicator(this.path);
+        Main.panel.addToStatusArea('haguichi-indicator', haguichiIndicator);
+    }
 
-/**
- * This function is called by GNOME Shell to disable the extension.
- */
-function disable() {
-    haguichiIndicator.destroy();
-    haguichiIndicator = null;
+    /**
+     * This function is called by GNOME Shell to disable the extension.
+     */
+    disable() {
+        haguichiIndicator.destroy();
+        haguichiIndicator = null;
+    }
 }
