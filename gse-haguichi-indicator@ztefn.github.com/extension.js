@@ -368,8 +368,10 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
      * This function switches the icon when connecting.
      */
     _switchIcon() {
-        if (this.mode !== 'Connecting')
+        if (this.mode !== 'Connecting') {
+            sourceId = null;
             return GLib.SOURCE_REMOVE;
+        }
 
         if (this.iconNum == 0) {
             this._setIcon('connecting-1');
