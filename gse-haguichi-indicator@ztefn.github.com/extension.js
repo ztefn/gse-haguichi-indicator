@@ -22,9 +22,11 @@ import GLib    from 'gi://GLib';
 import GObject from 'gi://GObject';
 import St      from 'gi://St';
 
-import * as Main      from 'resource:///org/gnome/shell/ui/main.js';
-import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
-import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as Main          from 'resource:///org/gnome/shell/ui/main.js';
+import * as PopupMenu     from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as QuickSettings from 'resource:///org/gnome/shell/ui/quickSettings.js';
+
+const QuickSettingsMenu = Main.panel.statusArea.quickSettings;
 
 import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
 
@@ -87,9 +89,9 @@ const HaguichiProxy = Gio.DBusProxy.makeProxyWrapper(HaguichiInterface);
 /**
  * Behold the Haguichi Indicator class.
  */
-const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends PanelMenu.Button {
+const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends QuickSettings.SystemIndicator {
     _init(path) {
-        super._init(0.5, 'Haguichi Indicator');
+        super._init();
 
         /**
          * Save the extension path needed when loading the status icons.
@@ -102,69 +104,58 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
         this.haguichiProxy = new HaguichiProxy(Gio.DBus.session, 'com.github.ztefn.haguichi', '/com/github/ztefn/haguichi');
 
         /**
-         * Construct the status icon and add it to the panel.
+         * Add the indicator and set initial icon.
          */
-        this.statusIcon = new St.Icon({ style_class: 'system-status-icon' });
+        this._indicator = this._addIndicator();
         this._setIcon('disconnected');
 
-        this.box = new St.BoxLayout({ style_class: 'panel-status-menu-box' });
-        this.box.add_actor(this.statusIcon);
+        /**
+         * Define the standard icon.
+         */
+        let icon = this._getGIcon('connected');
 
-        this.add_child(this.box);
+        /**
+         * Create the toggle button.
+         */
+        this._toggle = new HaguichiQuickMenuToggle();
+        this._toggle.gicon = icon;
+        this._toggle.menu.setHeader(icon, "Haguichi");
+        this._toggle.connect('clicked', () => {
+            if (this._toggle.toggle_mode) {
+                this._toggle.checked ? this.haguichiProxy.StartHamachiRemote() : this.haguichiProxy.StopHamachiRemote()
+            }
+        });
+
+        /**
+         * Add the toggle button to the quick settings.
+         */
+        this.quickSettingsItems.push(this._toggle);
 
         /**
          * Create all menu items.
          */
-        this.showMenuItem       = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Show Haguichi")));
-        this.connectingMenuItem = new PopupMenu.PopupMenuItem(removeMnemonics(_("Connecting…")).replace ('…', ''));
-        this.connectMenuItem    = new PopupMenu.PopupMenuItem(removeMnemonics(_("C_onnect")));
-        this.disconnectMenuItem = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Disconnect")));
-        this.joinMenuItem       = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Join Network…")));
-        this.createMenuItem     = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Create Network…")));
-        this.infoMenuItem       = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Information")));
-        this.quitMenuItem       = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Quit")));
+        this.joinMenuItem   = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Join Network…")));
+        this.createMenuItem = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Create Network…")));
+        this.quitMenuItem   = new PopupMenu.PopupMenuItem(removeMnemonics(_("_Quit")));
 
         /**
-         * Add the menu items and some separators to the popup menu.
+         * Add the menu items to the popup menu.
          */
-        this.menu.addMenuItem(this.showMenuItem);
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this.menu.addMenuItem(this.connectingMenuItem);
-        this.menu.addMenuItem(this.connectMenuItem);
-        this.menu.addMenuItem(this.disconnectMenuItem);
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this.menu.addMenuItem(this.joinMenuItem);
-        this.menu.addMenuItem(this.createMenuItem);
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this.menu.addMenuItem(this.infoMenuItem);
-        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-        this.menu.addMenuItem(this.quitMenuItem);
+        this._toggle.menu.addMenuItem(this.joinMenuItem);
+        this._toggle.menu.addMenuItem(this.createMenuItem);
+        this._toggle.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        this._toggle.menu.addMenuItem(this.quitMenuItem);
 
         /**
          * Connect some actions to the menu items.
          */
-        this.showMenuItem.connect('activate', () => {
-            if (this.showMenuItem._ornament == PopupMenu.Ornament.CHECK) {
-                this.haguichiProxy.HideRemote();
-            }
-            else {
-                this.haguichiProxy.ShowRemote();
-            }
-        });
-        this.connectMenuItem.connect('activate', () => {
-            this.haguichiProxy.StartHamachiRemote();
-        });
-        this.disconnectMenuItem.connect('activate', () => {
-            this.haguichiProxy.StopHamachiRemote();
-        });
         this.joinMenuItem.connect('activate', () => {
+            presentWindow();
             this.haguichiProxy.JoinNetworkRemote();
         });
         this.createMenuItem.connect('activate', () => {
+            presentWindow();
             this.haguichiProxy.CreateNetworkRemote();
-        });
-        this.infoMenuItem.connect('activate', () => {
-            this.haguichiProxy.InformationRemote();
         });
         this.quitMenuItem.connect('activate', () => {
             this.haguichiProxy.QuitAppRemote();
@@ -174,17 +165,13 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
          * Connect to the proxy signals so that we can update our state when changes occurs:
          * 1. Mode has changed
          * 2. Modal dialog is opened or closed
-         * 3. Main window is shown or hidden
-         * 4. Haguichi session has appeared or disappeared
+         * 3. Session has appeared or disappeared
          */
         this.haguichiProxy.connectSignal('ModeChanged', (proxy, sender, result) => {
             this._setMode(result[0]);
         });
         this.haguichiProxy.connectSignal('ModalityChanged', (proxy, sender, result) => {
             this._setModality(result[0]);
-        });
-        this.haguichiProxy.connectSignal('VisibilityChanged', (proxy, sender, result) => {
-            this._setAppVisibility(result[0]);
         });
         this.haguichiProxy.connect('notify::g-name-owner', () => {
             this._setIndicatorVisibility(this.haguichiProxy.get_name_owner() !== null);
@@ -194,7 +181,6 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
          * Retrieve the initial state to begin with:
          * 1. What mode are we currently in?
          * 2. Is there a modal dialog being shown?
-         * 3. Is the main window visible or not?
          */
         this.haguichiProxy.GetModeRemote((result) => {
             let [mode] = result;
@@ -203,10 +189,6 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
         this.haguichiProxy.GetModalityRemote((result) => {
             let [modal] = result;
             this._setModality(modal);
-        });
-        this.haguichiProxy.GetVisibilityRemote((result) => {
-            let [visible] = result;
-            this._setAppVisibility(visible);
         });
 
         /**
@@ -217,7 +199,8 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
         /**
          * Connect to scroll events.
          */
-        this.connect('scroll-event', this._onScrollEvent.bind(this));
+        this._indicator.reactive = true;
+        this._indicator.connect('scroll-event', this._onScrollEvent.bind(this));
     }
 
     /**
@@ -242,14 +225,8 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
      * This function shows or hides the indicator.
      */
     _setIndicatorVisibility(visible) {
-        this.visible = visible;
-    }
-
-    /**
-     * This function adds or removes the checkmark for the "Show Haguichi" menu item.
-     */
-    _setAppVisibility(visible) {
-        this.showMenuItem.setOrnament((visible == true) ? PopupMenu.Ornament.CHECK : PopupMenu.Ornament.NONE);
+        this._indicator.visible = visible;
+        this._toggle.visible = visible;
     }
 
     /**
@@ -261,72 +238,48 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
     }
 
     /**
-     * This function saves the current mode and makes calls to set both the icon and menu into the requested mode.
+     * This function saves the current mode and makes calls to set both the icon and toggle button into the requested mode.
      */
     _setMode(mode) {
         this._setIconMode(mode);
-        this._setMenuMode(mode);
+        this._setToggleMode(mode);
 
         this.mode = mode;
     }
 
     /**
-     * This function makes every menu item reflect the current mode Haguichi is in.
+     * This function makes the toggle button reflect the current mode Haguichi is in.
      */
-    _setMenuMode(mode) {
+    _setToggleMode(mode) {
+        this._toggle.checked = ((mode == 'Connected') || (mode == 'Connecting'));
+        this._toggle.toggle_mode = ((mode == 'Connected') || (mode == 'Disconnected'));
+
         switch (mode) {
+            case 'Initializing':
+                this._toggle.subtitle = _("Initializing…");
+                break;
+
+            case 'Configuring':
+                this._toggle.subtitle = _("Configuring…");
+                break;
+
             case 'Connecting':
-                this.connectingMenuItem.setSensitive(false);
-                this.connectingMenuItem.visible = true;
-                this.connectMenuItem.visible = false;
-                this.disconnectMenuItem.visible = false;
-                this.joinMenuItem.setSensitive(false);
-                this.createMenuItem.setSensitive(false);
-                this.infoMenuItem.setSensitive(true);
+                this._toggle.subtitle = _("Connecting…");
                 break;
 
             case 'Connected':
-                this.connectingMenuItem.visible = false;
-                this.connectMenuItem.visible = false;
-                this.disconnectMenuItem.setSensitive(true);
-                this.disconnectMenuItem.visible = true;
-                this.joinMenuItem.setSensitive(true);
-                this.createMenuItem.setSensitive(true);
-                this.infoMenuItem.setSensitive(true);
-                break;
-
-            case 'Disconnected':
-                this.connectingMenuItem.visible = false;
-                this.connectMenuItem.setSensitive(true);
-                this.connectMenuItem.visible = true;
-                this.disconnectMenuItem.visible = false;
-                this.joinMenuItem.setSensitive(false);
-                this.createMenuItem.setSensitive(false);
-                this.infoMenuItem.setSensitive(true);
+                this._toggle.subtitle = _("Connected");
                 break;
 
             default:
-                this.connectingMenuItem.visible = false;
-                this.connectMenuItem.setSensitive(false);
-                this.connectMenuItem.visible = true;
-                this.disconnectMenuItem.visible = false;
-                this.joinMenuItem.setSensitive(false);
-                this.createMenuItem.setSensitive(false);
-                this.infoMenuItem.setSensitive(false);
+                this._toggle.subtitle = _("Disconnected");
                 break;
         }
 
-        if (this.modal) {
-            this.showMenuItem.setSensitive(false);
-            this.connectMenuItem.setSensitive(false);
-            this.disconnectMenuItem.setSensitive(false);
-            this.joinMenuItem.setSensitive(false);
-            this.createMenuItem.setSensitive(false);
-            this.infoMenuItem.setSensitive(false);
-        }
-        else {
-            this.showMenuItem.setSensitive(true);
-        }
+        let sensitive = ((mode == 'Connected') && (this.modal !== true));
+
+        this.joinMenuItem.sensitive = sensitive;
+        this.createMenuItem.sensitive = sensitive;
     }
 
     /**
@@ -361,7 +314,14 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
      */
     _setIcon(iconName) {
         this.iconName = iconName;
-        this.statusIcon.gicon = Gio.icon_new_for_string(this.extensionPath + '/icons/haguichi-' + iconName + '-symbolic.svg');
+        this._indicator.gicon = this._getGIcon(iconName);
+    }
+
+    /**
+     * This function returns a GIcon based on icon name.
+     */
+    _getGIcon(iconName) {
+        return Gio.icon_new_for_string(this.extensionPath + '/icons/haguichi-' + iconName + '-symbolic.svg');
     }
 
     /**
@@ -390,6 +350,28 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
 });
 
 /**
+ * Behold the Haguichi Quick Menu Toggle class.
+ */
+const HaguichiQuickMenuToggle = GObject.registerClass(class HaguichiQuickMenuToggle extends QuickSettings.QuickMenuToggle {
+    _init() {
+        super._init({
+            title: "Haguichi",
+            toggleMode: true,
+            menuEnabled: true,
+        });
+    }
+});
+
+/**
+ * This function hides the overview and closes quick settings when presenting the main window.
+ * https://gitlab.gnome.org/GNOME/gnome-shell/-/blob/45.0/js/ui/popupMenu.js#L584
+ */
+function presentWindow() {
+    Main.overview.hide();
+    Main.panel.closeQuickSettings();
+}
+
+/**
  * GNOME Shell doesn't support keyboard mnemonics so this function strips out any of them:
  * 1. For Japanese in the form of underscore and letter within parentheses, i.e. "ラベル(_L)"
  * 2. For all other languages in the form of plain underscores, i.e. "_Label"
@@ -414,13 +396,14 @@ export default class HaguichiIndicatorExtension extends Extension {
      */
     enable() {
         haguichiIndicator = new HaguichiIndicator(this.path);
-        Main.panel.addToStatusArea('haguichi-indicator', haguichiIndicator);
+        QuickSettingsMenu.addExternalIndicator(haguichiIndicator);
     }
 
     /**
      * This function is called by GNOME Shell to disable the extension.
      */
     disable() {
+        haguichiIndicator.quickSettingsItems.forEach(item => item.destroy());
         haguichiIndicator.destroy();
         haguichiIndicator = null;
 
