@@ -167,13 +167,13 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
          * 2. Modal dialog is opened or closed
          * 3. Session has appeared or disappeared
          */
-        this.haguichiProxy.connectSignal('ModeChanged', (proxy, sender, result) => {
+        modeChangedSignalId = this.haguichiProxy.connectSignal('ModeChanged', (proxy, sender, result) => {
             this._setMode(result[0]);
         });
-        this.haguichiProxy.connectSignal('ModalityChanged', (proxy, sender, result) => {
+        modalityChangedSignalId = this.haguichiProxy.connectSignal('ModalityChanged', (proxy, sender, result) => {
             this._setModality(result[0]);
         });
-        this.haguichiProxy.connect('notify::g-name-owner', () => {
+        ownerChangedSignalId = this.haguichiProxy.connect('notify::g-name-owner', () => {
             this._setIndicatorVisibility(this.haguichiProxy.get_name_owner() !== null);
         });
 
@@ -386,6 +386,13 @@ function removeMnemonics(label) {
 let sourceId = null;
 
 /**
+ * Keep track of last signal ID's.
+ */
+let modeChangedSignalId     = null;
+let modalityChangedSignalId = null;
+let ownerChangedSignalId    = null;
+
+/**
  * This is our Haguichi Indicator instance.
  */
 let haguichiIndicator;
@@ -403,6 +410,19 @@ export default class HaguichiIndicatorExtension extends Extension {
      * This function is called by GNOME Shell to disable the extension.
      */
     disable() {
+        if (modeChangedSignalId) {
+            haguichiIndicator.haguichiProxy.disconnectSignal(modeChangedSignalId);
+            modeChangedSignalId = null;
+        }
+        if (modalityChangedSignalId) {
+            haguichiIndicator.haguichiProxy.disconnectSignal(modalityChangedSignalId);
+            modalityChangedSignalId = null;
+        }
+        if (ownerChangedSignalId) {
+            haguichiIndicator.haguichiProxy.disconnect(ownerChangedSignalId);
+            ownerChangedSignalId = null;
+        }
+
         haguichiIndicator.quickSettingsItems.forEach(item => item.destroy());
         haguichiIndicator.destroy();
         haguichiIndicator = null;
