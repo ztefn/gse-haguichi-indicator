@@ -226,7 +226,7 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
      */
     _setIndicatorVisibility(visible) {
         this._indicator.visible = visible;
-        this._toggle.visible = visible;
+        this._setMode(this.mode);
     }
 
     /**
@@ -253,16 +253,9 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
     _setToggleMode(mode) {
         this._toggle.checked = ((mode == 'Connected') || (mode == 'Connecting'));
         this._toggle.toggle_mode = ((mode == 'Connected') || (mode == 'Disconnected'));
+        this._toggle.visible = this._indicator.visible && ((mode == 'Connected') || (mode == 'Connecting') || (mode == 'Disconnected'));
 
         switch (mode) {
-            case 'Initializing':
-                this._toggle.subtitle = _("Initializing…");
-                break;
-
-            case 'Configuring':
-                this._toggle.subtitle = _("Configuring…");
-                break;
-
             case 'Connecting':
                 this._toggle.subtitle = _("Connecting…");
                 break;
