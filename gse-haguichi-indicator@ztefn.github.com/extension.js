@@ -44,8 +44,6 @@ const HaguichiInterface = '<node>\
     </method>\
     <method name="StopHamachi">\
     </method>\
-    <method name="ChangeNick">\
-    </method>\
     <method name="JoinNetwork">\
     </method>\
     <method name="CreateNetwork">\
@@ -257,7 +255,7 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
 
         switch (mode) {
             case 'Connecting':
-                this._toggle.subtitle = _("Connecting…");
+                this._toggle.subtitle = _("Connecting");
                 break;
 
             case 'Connected':
