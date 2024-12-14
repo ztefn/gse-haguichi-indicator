@@ -4,7 +4,7 @@ Lets you control [Haguichi](https://haguichi.net) directly from the system statu
 
 ## Screenshot
 
-![Screenshot](https://github.com/ztefn/gse-haguichi-indicator/raw/master/screenshot.png)
+![Screenshot](screenshot.png)
 
 ## Installation
 
