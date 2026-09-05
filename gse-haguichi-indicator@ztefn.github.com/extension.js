@@ -1,6 +1,6 @@
 /**
     Haguichi Indicator for GNOME Shell
-    Copyright (C) 2016-2023 Stephen Brandt <stephen@stephenbrandt.com>
+    Copyright (C) 2016-2026 Stephen Brandt <stephen@stephenbrandt.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -118,7 +118,7 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
         this._toggle = new HaguichiQuickMenuToggle();
         this._toggle.gicon = icon;
         this._toggle.menu.setHeader(icon, "Haguichi");
-        this._toggle.connect('clicked', () => {
+        toggleSignalId = this._toggle.connect('clicked', () => {
             if (this._toggle.toggle_mode) {
                 this._toggle.checked ? this.haguichiProxy.StartHamachiRemote() : this.haguichiProxy.StopHamachiRemote()
             }
@@ -147,15 +147,15 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
         /**
          * Connect some actions to the menu items.
          */
-        this.joinMenuItem.connect('activate', () => {
+        joinMenuItemSignalId = this.joinMenuItem.connect('activate', () => {
             presentWindow();
             this.haguichiProxy.JoinNetworkRemote();
         });
-        this.createMenuItem.connect('activate', () => {
+        createMenuItemSignalId = this.createMenuItem.connect('activate', () => {
             presentWindow();
             this.haguichiProxy.CreateNetworkRemote();
         });
-        this.quitMenuItem.connect('activate', () => {
+        quitMenuItemSignalId = this.quitMenuItem.connect('activate', () => {
             this.haguichiProxy.QuitAppRemote();
         });
 
@@ -198,7 +198,7 @@ const HaguichiIndicator = GObject.registerClass(class HaguichiIndicator extends 
          * Connect to scroll events.
          */
         this._indicator.reactive = true;
-        this._indicator.connect('scroll-event', this._onScrollEvent.bind(this));
+        indicatorSignalId = this._indicator.connect('scroll-event', this._onScrollEvent.bind(this));
     }
 
     /**
@@ -379,9 +379,14 @@ let sourceId = null;
 /**
  * Keep track of last signal ID's.
  */
+let toggleSignalId          = null;
+let createMenuItemSignalId  = null;
+let joinMenuItemSignalId    = null;
+let quitMenuItemSignalId    = null;
 let modeChangedSignalId     = null;
 let modalityChangedSignalId = null;
 let ownerChangedSignalId    = null;
+let indicatorSignalId       = null;
 
 /**
  * This is our Haguichi Indicator instance.
@@ -401,6 +406,22 @@ export default class HaguichiIndicatorExtension extends Extension {
      * This function is called by GNOME Shell to disable the extension.
      */
     disable() {
+        if (toggleSignalId) {
+            haguichiIndicator._toggle.disconnect(toggleSignalId);
+            toggleSignalId = null;
+        }
+        if (createMenuItemSignalId) {
+            haguichiIndicator.createMenuItem.disconnect(createMenuItemSignalId);
+            createMenuItemSignalId = null;
+        }
+        if (joinMenuItemSignalId) {
+            haguichiIndicator.joinMenuItem.disconnect(joinMenuItemSignalId);
+            joinMenuItemSignalId = null;
+        }
+        if (quitMenuItemSignalId) {
+            haguichiIndicator.quitMenuItem.disconnect(quitMenuItemSignalId);
+            quitMenuItemSignalId = null;
+        }
         if (modeChangedSignalId) {
             haguichiIndicator.haguichiProxy.disconnectSignal(modeChangedSignalId);
             modeChangedSignalId = null;
@@ -412,6 +433,10 @@ export default class HaguichiIndicatorExtension extends Extension {
         if (ownerChangedSignalId) {
             haguichiIndicator.haguichiProxy.disconnect(ownerChangedSignalId);
             ownerChangedSignalId = null;
+        }
+        if (indicatorSignalId) {
+            haguichiIndicator._indicator.disconnect(indicatorSignalId);
+            indicatorSignalId = null;
         }
 
         haguichiIndicator.quickSettingsItems.forEach(item => item.destroy());
